@@ -56,8 +56,8 @@ IF %BUILD_MODE% == stable_build  ( SET PACKAGE_TYPE="msi") ELSE (
 )))))
 
 SET NEED_SIGN=OFF 
-IF %PACKAGE_TYPE% == "msi"      ( SET NEED_SIGN=ON) 
-IF %PACKAGE_TYPE% == "portable" ( SET NEED_SIGN=ON) 
+#IF %PACKAGE_TYPE% == "msi"      ( SET NEED_SIGN=ON) 
+#IF %PACKAGE_TYPE% == "portable" ( SET NEED_SIGN=ON) 
 
 SET DO_SIGN=OFF
 IF %NEED_SIGN% == ON ( 
