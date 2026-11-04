@@ -6163,8 +6163,9 @@ void ScoreFont::draw(SymId id, QPainter* painter, const QSizeF& mag, const QPoin
 
       QColor color(painter->pen().color());
 
-      int pr           = painter->device()->devicePixelRatio();
-      qreal pixelRatio = qreal(pr > 0 ? pr : 1);
+      qreal pixelRatio = painter->device()->devicePixelRatioF();
+      if (pixelRatio <= 0.0)
+            pixelRatio = 1.0;
       worldScale      *= pixelRatio;
 //      if (worldScale < 1.0)
 //            worldScale = 1.0;
