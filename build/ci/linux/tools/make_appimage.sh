@@ -6,6 +6,11 @@ APPIMAGE_NAME="$2" # name for AppImage file (created outside $INSTALL_DIR)
 if [ -z "$INSTALL_DIR" ]; then echo "error: not set INSTALL_DIR"; exit 1; fi
 if [ -z "$APPIMAGE_NAME" ]; then echo "error: not set APPIMAGE_NAME"; exit 1; fi
 
+# Repository root, resolved before this script changes directory. Needed to find
+# the staged fcitx5-qt plugin below.
+SCRIPT_DIR="$(cd "$(dirname "$(readlink -f "${0}")")" && pwd)"
+REPO_DIR="$(cd "${SCRIPT_DIR}/../../../.." && pwd)"
+
 ##########################################################################
 # INSTALL APPIMAGETOOL AND LINUXDEPLOY
 ##########################################################################
@@ -99,6 +104,41 @@ linuxdeploy --appdir "${appdir}" # adds all shared library dependencies
 linuxdeploy-plugin-qt --appdir "${appdir}" # adds all Qt dependencies
 
 unset QML_SOURCES_PATHS
+
+# Bundle the fcitx5-qt input method plugin (built against the bundled Qt by
+# build/ci/linux/fcitx5-qt-plugin.sh). Shipping it inside the AppImage makes
+# QT_IM_MODULE=fcitx independent of the host distribution: Qt refuses plugins
+# built with a newer Qt minor version than the one bundled here, so relying on
+# the system plugin would break the input method without any obvious error.
+fcitx5_qt_stage="${FCITX5_QT_STAGE:-${REPO_DIR}/build.artifacts/fcitx5-qt}"
+fcitx5_qt_plugin="${fcitx5_qt_stage}/plugins/platforminputcontexts/libfcitx5platforminputcontextplugin.so"
+
+if [[ -f "${fcitx5_qt_plugin}" ]]; then
+  # Qt plugins end up in <appdir>/plugins (usr is a symlink to .), but stay
+  # tolerant about the exact location.
+  plugin_input_contexts="$(find "${appdir}" -type d -name platforminputcontexts -print -quit || true)"
+  if [[ -z "${plugin_input_contexts}" ]]; then
+    plugin_input_contexts="${appdir}/usr/plugins/platforminputcontexts"
+  fi
+  mkdir -p "${plugin_input_contexts}"
+  cp -L "${fcitx5_qt_plugin}" "${plugin_input_contexts}/"
+  echo "Bundled fcitx5-qt plugin into ${plugin_input_contexts}"
+
+  # Pull in the remaining Qt dependency of the plugin (QtDBus; MuseScore itself
+  # does not link QtDBus, so the loader has to find it by path). The plugin was
+  # built with an RPATH of $ORIGIN/../../lib, i.e. this directory.
+  appdir_lib_dir="$(dirname "$(find "${appdir}" -name 'libQt5Core.so.5*' -print -quit)")"
+  cp -L "${QT_PATH}"/lib/libQt5DBus.so.5* "${appdir_lib_dir}/"
+
+  ldd "${plugin_input_contexts}/libfcitx5platforminputcontextplugin.so" \
+    | grep -E "Qt5DBus|not found"
+  if ldd "${plugin_input_contexts}/libfcitx5platforminputcontextplugin.so" | grep -q "not found"; then
+    echo "error: fcitx5-qt plugin still has unresolved dependencies" >&2
+    exit 1
+  fi
+else
+  echo "warning: ${fcitx5_qt_plugin} not found, the AppImage will not bundle the fcitx5-qt input method plugin" >&2
+fi
 
 # In case this container is reused multiple times, return the moved libraries back
 mv "${qt_sql_drivers_tmp}/libqsqlmysql.so" "${qt_sql_drivers_path}/libqsqlmysql.so"

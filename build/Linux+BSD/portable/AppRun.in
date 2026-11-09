@@ -22,6 +22,29 @@ done
 # directory because linuxdeploy sets RUNPATH to point to it anyway.
 export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}${fallback_libs}"
 
+# Use the bundled fcitx5 input method plugin when the session runs fcitx5.
+# An explicitly set QT_IM_MODULE is never overridden, so users of ibus (or of a
+# system fcitx5 plugin) keep exactly the setup they had before.
+if [[ -z "${QT_IM_MODULE+x}" ]]; then
+  fcitx5_session=""
+  if [[ -n "${DBUS_SESSION_BUS_ADDRESS:-}" ]] && command -v dbus-send >/dev/null 2>&1; then
+    # Authoritative check: is an fcitx5 daemon owning its bus name?
+    if dbus-send --session --print-reply --dest=org.freedesktop.DBus \
+         /org/freedesktop/DBus org.freedesktop.DBus.NameHasOwner \
+         string:org.fcitx.Fcitx5 2>/dev/null | grep -q 'boolean true'; then
+      fcitx5_session=1
+    fi
+  else
+    # No D-Bus tooling available: fall back to the session hint.
+    case "${XMODIFIERS:-}" in
+      *fcitx*) fcitx5_session=1 ;;
+    esac
+  fi
+  if [[ -n "${fcitx5_session}" ]]; then
+    export QT_IM_MODULE=fcitx
+  fi
+fi
+
 # Launch MuseScore or an accompanying script
 case "$1" in
   -h|--help|install|update|upgrade|uninstall|remove|man|manual|manpage|check-depends|check-dependencies )

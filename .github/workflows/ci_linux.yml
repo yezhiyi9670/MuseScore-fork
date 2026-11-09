@@ -54,6 +54,10 @@ jobs:
       if: env.DO_BUILD == 'true'
       run: |
         sudo bash ./build/ci/linux/setup.sh
+    - name: Build fcitx5-qt input method plugin
+      if: env.DO_BUILD == 'true'
+      run: |
+        sudo bash ./build/ci/linux/fcitx5-qt-plugin.sh
     - name: Build
       if: env.DO_BUILD == 'true'
       run: |
