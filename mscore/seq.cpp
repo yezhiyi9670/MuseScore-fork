@@ -1659,7 +1659,10 @@ void Seq::heartBeatTimeout()
                         }
                   }
             }
-      int utick = ppos->first;
+      // Follow the audio clock instead of the last event tick, so that the
+      // notation cursor is interpolated to a continuously advancing position
+      // (the pianoroll already uses getCurTick() for the same purpose).
+      int utick = getCurTick();
       int t = cs->repeatList().utick2tick(utick);
       mscore->currentScoreView()->moveCursor(Fraction::fromTicks(t));
       mscore->setPos(Fraction::fromTicks(t));
