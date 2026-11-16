@@ -15,7 +15,7 @@ QGroupBox::title {
 }
 
 QDockWidget {
- border: 1px solid lightgray;
+ border: 1px solid #3D3D3D;
  titlebar-close-icon: url(:/data/icons/png/dockwidget-close-dark.png);
  titlebar-normal-icon: url(:/data/icons/png/dockwidget-float-dark.png);
 }
@@ -65,11 +65,11 @@ QTableView { border: none; }
 
 /* dock and main area separator */
 QMainWindow::separator {
-    background: #C8C8C8;
+    background: #3D3D3D;
     width: 1px; /* when vertical */
     height: 1px; /* when horizontal */
 }
 
 QMainWindow::separator:hover {
-    background: gray;
+    background: #5A5A5A;
 }

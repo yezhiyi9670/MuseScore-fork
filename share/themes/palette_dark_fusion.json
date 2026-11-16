@@ -12,5 +12,10 @@
 "Link":          "#00ffff",
 "LinkVisited":   "#00ffff",
 "Highlight":     "#0065BF",
-"HighlightedText": "#EFF0F1"
+"HighlightedText": "#EFF0F1",
+"Light":         "#424242",
+"Midlight":      "#252525",
+"Mid":           "#222222",
+"Dark":          "#1D1D1D",
+"Shadow":        "#151515"
 }
