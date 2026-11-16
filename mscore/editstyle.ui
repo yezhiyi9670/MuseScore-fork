@@ -10666,6 +10666,9 @@ By default, they will be placed such as that their right end are at the same lev
                <property name="minimum">
                 <double>5.000000000000000</double>
                </property>
+               <property name="maximum">
+                <double>512.000000000000000</double>
+               </property>
                <property name="value">
                 <double>9.000000000000000</double>
                </property>
@@ -12073,6 +12076,9 @@ By default, they will be placed such as that their right end are at the same lev
              </property>
              <property name="minimum">
               <double>1.000000000000000</double>
+             </property>
+             <property name="maximum">
+              <double>512.000000000000000</double>
              </property>
             </widget>
            </item>
