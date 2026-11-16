@@ -11,5 +11,6 @@
 "ToolTipText":   "#000000",
 "Link":          "#00ffff",
 "LinkVisited":   "#00ffff",
-"Highlight":     "#0065BF"
+"Highlight":     "#0065BF",
+"HighlightedText": "#EFF0F1"
 }
