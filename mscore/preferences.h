@@ -68,9 +68,7 @@ enum {
 enum class MuseScorePreferredStyleType : char {
       LIGHT_FUSION = 0,
       DARK_FUSION,
-#ifdef Q_OS_MAC
       FOLLOW_SYSTEM,
-#endif
       };
 
 // The actual "theme", resulting from the user's choice
@@ -187,6 +185,10 @@ class Preferences {
       bool checkIfKeyExists(const QString key) const;
       bool checkType(const QString key, QMetaType::Type t) const;
 
+      // Whether the system asks for a dark color scheme. Kept up to date by
+      // SystemTheme; only used when the "System" theme is selected.
+      bool _systemThemeIsDark = false;
+
       // Used with workspace
       QMap<QString, QVariant> localPreferences;
       QMap<QString, QVariant> getDefaultLocalPreferences();
@@ -234,6 +236,7 @@ class Preferences {
       MuseScorePreferredStyleType preferredGlobalStyle() const;
       MuseScoreEffectiveStyleType effectiveGlobalStyle() const;
       bool isThemeDark() const;
+      void setSystemThemeIsDark(bool dark) { _systemThemeIsDark = dark; }
 
       template<typename T>
       void setCustomPreference(const QString key, T t)

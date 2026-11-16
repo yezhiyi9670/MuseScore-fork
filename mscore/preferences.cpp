@@ -508,10 +508,13 @@ MuseScorePreferredStyleType Preferences::preferredGlobalStyle() const
 MuseScoreEffectiveStyleType Preferences::effectiveGlobalStyle() const
       {
       MuseScorePreferredStyleType s = preferredGlobalStyle();
+      if (s == MuseScorePreferredStyleType::FOLLOW_SYSTEM) {
 #ifdef Q_OS_MAC // On Mac, follow system theme if desired
-      if (s == MuseScorePreferredStyleType::FOLLOW_SYSTEM)
             return CocoaBridge::isSystemDarkTheme() ? MuseScoreEffectiveStyleType::DARK_FUSION : MuseScoreEffectiveStyleType::LIGHT_FUSION;
+#else
+            return _systemThemeIsDark ? MuseScoreEffectiveStyleType::DARK_FUSION : MuseScoreEffectiveStyleType::LIGHT_FUSION;
 #endif
+            }
       return MuseScoreEffectiveStyleType(s);
       }
 

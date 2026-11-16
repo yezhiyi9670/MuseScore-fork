@@ -40,10 +40,6 @@
 #include "avsomr/avsomrlocal.h"
 #endif
 
-#ifdef Q_OS_MAC
-#include "macos/cocoabridge.h"
-#endif
-
 namespace Ms {
 
 //---------------------------------------------------------
@@ -78,10 +74,7 @@ PreferenceDialog::PreferenceDialog(QWidget* parent)
       styleName->clear();
       styleName->addItem(tr("Light"));
       styleName->addItem(tr("Dark"));
-#ifdef Q_OS_MAC // On Mac, we have a theme option to follow the system's Dark Mode
-      if (CocoaBridge::isSystemDarkModeSupported())
-            styleName->addItem(tr("System"));
-#endif
+      styleName->addItem(tr("System"));
 
 #ifndef USE_JACK
       jackDriver->setVisible(false);
@@ -650,10 +643,7 @@ void PreferenceDialog::updateValues(bool useDefaultValues, bool setup)
       styleName->clear();
       styleName->addItem(tr("Light"));
       styleName->addItem(tr("Dark"));
-#ifdef Q_OS_MAC // On Mac, we have a theme option to follow the system's Dark Mode
-      if (CocoaBridge::isSystemDarkModeSupported())
-            styleName->addItem(tr("System"));
-#endif
+      styleName->addItem(tr("System"));
 
       advancedWidget->updatePreferences();
 

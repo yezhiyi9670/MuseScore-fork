@@ -19,6 +19,7 @@ set(_components
     OpenGL
     LinguistTools
     Help
+    DBus
   )
 if (USE_WEBENGINE)
   set(_components

@@ -186,7 +186,7 @@ add_library(mscoreapp STATIC
       omrpanel.h pagesettings.h palette.h partedit.h parteditbase.h
       pathlistdialog.h piano.h  pianotools.h
       openfilelocation.h
-      playpanel.h preferences.h preferenceslistwidget.h prefsdialog.h
+      playpanel.h preferences.h preferenceslistwidget.h prefsdialog.h systemtheme.h
       radiobuttongroupbox.h recordbutton.h resourceManager.h ruler.h scoreaccessibility.h
       scoreBrowser.h scoreInfo.h scorePreview.h scoretab.h scoreview.h searchComboBox.h
       selectdialog.h selectionwindow.h selectnotedialog.h selinstrument.h
@@ -213,6 +213,7 @@ add_library(mscoreapp STATIC
       timeline.cpp
       parteditbase.cpp playpanel.cpp selectionwindow.cpp
       preferences.cpp measureproperties.cpp
+      systemtheme.cpp
       seq.cpp textpalette.cpp
       timedialog.cpp symboldialog.cpp shortcutcapturedialog.cpp
       radiobuttongroupbox.cpp simplebutton.cpp
@@ -290,6 +291,13 @@ add_library(mscoreapp STATIC
 
       sparkle/autoUpdater.h sparkle/sparkleAutoUpdater.h sparkle/winSparkleAutoUpdater.h
       )
+
+# QtDBus is used by SystemTheme to follow the system's color scheme through the
+# XDG desktop portal. It is optional: without it the configuration files and the
+# platform palette are used instead.
+if (Qt5DBus_FOUND)
+      target_compile_definitions(mscoreapp PRIVATE HAVE_QTDBUS)
+endif()
 
 if (MSVC OR MINGW)
       target_link_libraries(mscoreapp vorbisfiledll)

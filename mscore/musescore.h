@@ -508,6 +508,7 @@ class MuseScore : public QMainWindow, public MuseScoreCore {
 
    private slots:
       void cmd(QAction* a, const QString& cmd);
+      void systemThemeChanged();
       void autoSaveTimerTimeout();
       void helpBrowser1() const;
       void resetAndRestart();

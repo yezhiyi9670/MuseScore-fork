@@ -29,6 +29,7 @@
 #include "instrdialog.h"
 #include "preferences.h"
 #include "prefsdialog.h"
+#include "systemtheme.h"
 #include "realizeharmonydialog.h"
 #include "icons.h"
 #include "libmscore/xml.h"
@@ -460,6 +461,20 @@ void updateExternalValuesFromPreferences() {
                   dir.mkpath(path);
                   }
             }
+
+//---------------------------------------------------------
+//   systemThemeChanged
+//    The system switched between a light and a dark color
+//    scheme; follow it when the user asked for that.
+//---------------------------------------------------------
+
+void MuseScore::systemThemeChanged()
+      {
+      const bool dark = SystemTheme::instance()->scheme() == SystemTheme::Scheme::DARK;
+      preferences.setSystemThemeIsDark(dark);
+      if (preferences.preferredGlobalStyle() == MuseScorePreferredStyleType::FOLLOW_SYSTEM)
+            MuseScore::updateUiStyleAndTheme();
+      }
 
 //---------------------------------------------------------
 //   preferencesChanged
@@ -1051,6 +1066,8 @@ MuseScore::MuseScore()
       _tourHandler = new TourHandler(this);
       qApp->installEventFilter(_tourHandler);
       _tourHandler->loadTours();
+
+      connect(SystemTheme::instance(), &SystemTheme::schemeChanged, this, &MuseScore::systemThemeChanged);
 
       setTabPosition(Qt::AllDockWidgetAreas, QTabWidget::North);
 
@@ -8046,6 +8063,15 @@ void MuseScore::init(QStringList& argv)
       // Best not to show this since the font used to display the message
       // isn't updated till updateUiStyleAndTheme()
       // showSplashMessage(sc, tr("Updating user interface and theme…"));
+      //
+      // Start following the system color scheme before the first application of
+      // the UI theme: when "System" is selected the palette to use depends on
+      // it. The application palette still is the platform one at this point,
+      // which is also the fallback when there is no desktop portal.
+      SystemTheme* systemTheme = SystemTheme::instance();
+      systemTheme->start();
+      preferences.setSystemThemeIsDark(systemTheme->scheme() == SystemTheme::Scheme::DARK);
+
       if (!MScore::noGui) {
             MuseScore::updateUiStyleAndTheme();
             }
@@ -8235,13 +8261,6 @@ void MuseScore::init(QStringList& argv)
 
       // don't let macOS add "Show Tab Bar" to "View" Menu
       CocoaBridge::setAllowsAutomaticWindowTabbing(false);
-
-      // Observe when macOS's Dark Mode is switched on or off and let MuseScore's
-      // theme switch along with it if the user has chosen that setting
-      CocoaBridge::observeDarkModeSwitches([]() {
-            if (preferences.preferredGlobalStyle() == MuseScorePreferredStyleType::FOLLOW_SYSTEM)
-                  MuseScore::updateUiStyleAndTheme();
-            });
 #endif
 
       mscore->changeState(mscore->noScore() ? STATE_DISABLED : STATE_NORMAL);
