@@ -1,5 +1,6 @@
 #include <QMainWindow>
 #include <QWidget>
+#include <QDockWidget>
 #include "scoreaccessibility.h"
 #include "musescore.h"
 #include "libmscore/segment.h"
@@ -368,7 +369,22 @@ void ScoreAccessibility::updateAccessibilityInfo()
       //when this method is called
       //TODO: create a class to manage focus and replace this massive if
       QWidget* focusWidget = qApp->focusWidget();
-      if ((focusWidget != w) &&
+      // Keep the focus where it is when it is in a docked panel (plugin docks
+      // included) or in another window (dialogs, plugin windows): a plugin may
+      // be updating the score while the user is working in its own UI.
+      bool keepFocus = false;
+      // Another top level window is active (dialog, plugin window, popup).
+      if (qApp->focusWindow() && mscore->windowHandle() && qApp->focusWindow() != mscore->windowHandle())
+            keepFocus = true;
+      if (!keepFocus && focusWidget && focusWidget != w) {
+            if (focusWidget->window() != mscore)
+                  keepFocus = true;
+            else {
+                  for (QWidget* p = focusWidget; p && !keepFocus; p = p->parentWidget())
+                        keepFocus = qobject_cast<QDockWidget*>(p) != nullptr;
+                  }
+            }
+      if ((focusWidget != w) && !keepFocus &&
            !(mscore->inspector() && mscore->inspector()->isAncestorOf(focusWidget)) &&
            !(mscore->searchDialog() && mscore->searchDialog()->isAncestorOf(focusWidget)) &&
            !(mscore->getSelectionWindow() && mscore->getSelectionWindow()->isAncestorOf(focusWidget)) &&
