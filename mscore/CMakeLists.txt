@@ -293,9 +293,11 @@ add_library(mscoreapp STATIC
       )
 
 # QtDBus is used by SystemTheme to follow the system's color scheme through the
-# XDG desktop portal. It is optional: without it the configuration files and the
-# platform palette are used instead.
-if (Qt5DBus_FOUND)
+# XDG desktop portal. That portal only exists on Linux, and on Windows the
+# QtDBus headers clash with the "interface" macro from the Windows SDK, so keep
+# this Linux-only. Windows and macOS use their native APIs instead; on Linux
+# without QtDBus the configuration files and the platform palette are used.
+if (UNIX AND NOT APPLE AND Qt5DBus_FOUND)
       target_compile_definitions(mscoreapp PRIVATE HAVE_QTDBUS)
 endif()
 
