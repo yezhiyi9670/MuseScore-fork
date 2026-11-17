@@ -4376,6 +4376,16 @@ void MuseScore::changeState(ScoreState val)
                   }
             }
 
+      // Plugin shortcuts are not part of the shortcut table above, so Qt would
+      // trigger them even while the user types in a text element or a lyric
+      // (built-in shortcuts are disabled above by their state mask). Disable
+      // them while text is being edited so the key reaches the text instead.
+      const bool textEditing = (val & STATE_ALLTEXTUAL_EDIT) != 0;
+      for (QAction* a : pluginActions) {
+            if (a)
+                  a->setEnabled(!textEditing);
+            }
+
       if (getAction("join-measures")->isEnabled())
             getAction("join-measures")->setEnabled(cs && cs->masterScore()->excerpts().size() == 0);
       if (getAction("split-measure")->isEnabled())

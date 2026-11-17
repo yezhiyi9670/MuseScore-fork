@@ -95,8 +95,10 @@ bool PluginManager::readPluginList()
                                     else
                                           e.unknown();
                                     }
+                              // Textual edit states are deliberately excluded: the
+                              // plugin shortcut must not steal keys while typing.
                               d.shortcut.setState(STATE_NORMAL | STATE_NOTE_ENTRY | STATE_EDIT |
-                                          STATE_ALLTEXTUAL_EDIT | STATE_PLAY | STATE_FOTO | STATE_LOCK );
+                                          STATE_PLAY | STATE_FOTO | STATE_LOCK );
                               d.shortcut.setKey(pluginShortcutActionName);
                               if (d.path.endsWith(".qml"))
                                     _pluginList.append(d);
