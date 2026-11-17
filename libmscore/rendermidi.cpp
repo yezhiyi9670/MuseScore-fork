@@ -370,6 +370,24 @@ static void collectNote(EventMap* events, int channel, const Note* note, qreal v
             if (tieFor && i == nels - 1)
                   off += tieLen;
 
+            // A per-note playback delay moves the note-on only, the note still
+            // ends where it would without the delay. It is added on top of the
+            // offsets already carried by the note events (e.g. arpeggios).
+            const qreal delay = note->playDelay();
+            if (delay != 0.0) {
+                  const int onTime = on;
+                  on += qRound(delay * chord->score()->tempomap()->tempo(on) * MScore::division / 1000.0);
+                  // Grace notes legitimately live before their chord (negative
+                  // ticks), so only pull notes back to the score start.
+                  if (onTime >= 0 && on < 0)
+                        on = 0;
+                  // Keep the note-on before the note-off: a positive delay must
+                  // never turn the note into an orphaned note-off followed by a
+                  // note-on (that would leave the synthesizer with a stuck note).
+                  if (off > onTime && on >= off)
+                        on = off - 1;
+                  }
+
             // Get the velocity used for this note from the staff
             // This allows correct playback of tremolos even without SND enabled.
             int velo;

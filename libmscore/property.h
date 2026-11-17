@@ -364,6 +364,8 @@ enum class Pid {
 
       PREFER_SHARP_FLAT,
 
+      PLAY_DELAY,
+
       END
       };
 

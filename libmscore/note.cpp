@@ -1313,7 +1313,7 @@ void Note::write(XmlWriter& xml) const
             xml.etag();
             }
       for (Pid id : { Pid::PITCH, Pid::TPC1, Pid::TPC2, Pid::SMALL, Pid::MIRROR_HEAD, Pid::DOT_POSITION,
-         Pid::HEAD_SCHEME, Pid::HEAD_GROUP, Pid::VELO_OFFSET, Pid::PLAY, Pid::TUNING, Pid::FRET, Pid::STRING,
+         Pid::HEAD_SCHEME, Pid::HEAD_GROUP, Pid::VELO_OFFSET, Pid::PLAY, Pid::TUNING, Pid::PLAY_DELAY, Pid::FRET, Pid::STRING,
          Pid::GHOST, Pid::HEAD_TYPE, Pid::VELO_TYPE, Pid::FIXED, Pid::FIXED_LINE
             }) {
             writeProperty(xml, id);
@@ -2791,6 +2791,8 @@ QVariant Note::getProperty(Pid propertyId) const
                   return veloOffset();
             case Pid::TUNING:
                   return tuning();
+            case Pid::PLAY_DELAY:
+                  return playDelay();
             case Pid::FRET:
                   return fret();
             case Pid::STRING:
@@ -2858,6 +2860,10 @@ bool Note::setProperty(Pid propertyId, const QVariant& v)
                   break;
             case Pid::TUNING:
                   setTuning(v.toDouble());
+                  score()->setPlaylistDirty();
+                  break;
+            case Pid::PLAY_DELAY:
+                  setPlayDelay(v.toReal());
                   score()->setPlaylistDirty();
                   break;
             case Pid::FRET:
@@ -2932,6 +2938,8 @@ QVariant Note::propertyDefault(Pid propertyId) const
             case Pid::VELO_OFFSET:
                   return 0;
             case Pid::TUNING:
+                  return 0.0;
+            case Pid::PLAY_DELAY:
                   return 0.0;
             case Pid::FRET:
             case Pid::STRING:

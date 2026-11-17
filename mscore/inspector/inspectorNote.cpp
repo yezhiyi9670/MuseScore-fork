@@ -99,6 +99,7 @@ InspectorNote::InspectorNote(QWidget* parent)
             { Pid::MIRROR_HEAD,    0, n.mirrorHead,    n.resetMirrorHead    },
             { Pid::PLAY,           0, n.play,          n.resetPlay          },
             { Pid::TUNING,         0, n.tuning,        n.resetTuning        },
+            { Pid::PLAY_DELAY,     0, n.delay,         n.resetDelay         },
             { Pid::VELO_TYPE,      0, n.velocityType,  n.resetVelocityType  },
             { Pid::VELO_OFFSET,    0, n.velocity,      n.resetVelocity      },
             { Pid::FIXED,          0, n.fixed,         n.resetFixed         },

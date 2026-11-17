@@ -498,6 +498,12 @@ class Note : public Element {
       /** See PluginAPI::PluginAPI::NoteValueType */
       API_PROPERTY( veloType,                VELO_TYPE                 )
       API_PROPERTY_T( int, veloOffset,       VELO_OFFSET               )
+      /**
+       * Extra delay of the note-on in milliseconds, applied on top of any delay
+       * coming from the note events (e.g. arpeggios). Playback only; the note
+       * still ends at its original time. Negative values advance the note-on.
+       */
+      API_PROPERTY_T( double, playDelay,     PLAY_DELAY                )
 
    public:
       /// \cond MS_INTERNAL

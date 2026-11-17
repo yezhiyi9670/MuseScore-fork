@@ -276,6 +276,7 @@ class Note final : public Element {
       int _veloOffset     { 0 };    ///< velocity user offset in percent, or absolute velocity for this note
       int _fixedLine      { 0 };    // fixed line number if _fixed == true
       qreal _tuning       { 0.0 };  ///< pitch offset in cent, playable only by internal synthesizer
+      qreal _playDelay    { 0.0 };  ///< extra delay of the note-on in ms, playback only
 
       Accidental* _accidental { 0 };
 
@@ -364,6 +365,8 @@ class Note final : public Element {
       int epitch() const;           ///< effective pitch
       qreal tuning() const                { return _tuning;   }
       void setTuning(qreal v)             { _tuning = v;      }
+      qreal playDelay() const             { return _playDelay; }
+      void setPlayDelay(qreal v)          { _playDelay = v;    }
       void undoSetTpc(int v);
       int transposition() const;
       bool fixed() const                  { return _fixed;     }

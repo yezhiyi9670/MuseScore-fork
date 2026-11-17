@@ -356,6 +356,8 @@ static constexpr PropertyMetaData propertyList[] = {
 
       { Pid::PREFER_SHARP_FLAT,       true,  "preferSharpFlat",       P_TYPE::INT,                 DUMMY_QT_TRANSLATE_NOOP("propertyName", "prefer sharps or flats") },
 
+      { Pid::PLAY_DELAY,              false, "playDelay",             P_TYPE::REAL,                DUMMY_QT_TRANSLATE_NOOP("propertyName", "play delay (ms)")  },
+
       { Pid::END, false, "++end++", P_TYPE::INT, DUMMY_QT_TRANSLATE_NOOP("propertyName", "<invalid property>") }
       };
 
