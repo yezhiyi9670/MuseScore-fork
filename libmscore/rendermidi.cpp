@@ -16,6 +16,8 @@
 */
 
 #include <set>
+#include <algorithm>
+#include <vector>
 
 #include "rendermidi.h"
 #include "score.h"
@@ -301,6 +303,120 @@ static void playNote(EventMap* events, const Note* note, int channel, int pitch,
       }
 
 //---------------------------------------------------------
+//   crossStaffArpeggioOffset
+//    Tick offset of a note that takes part in an arpeggio spanning
+//    several staves. Notes are ordered visually: the staff is the
+//    primary key (bottom to top for an up arpeggio), the pitch is
+//    the secondary one. The offset is computed here rather than in
+//    renderArpeggio() because it depends on the notes of all the
+//    spanned staves, not only on the notes of the arpeggio's chord.
+//---------------------------------------------------------
+
+static int crossStaffArpeggioOffset(const Note* note)
+      {
+      Chord* chord = note->chord();
+      if (!chord || chord->isGrace() || chord->tremolo())
+            return 0;
+      Segment* seg = chord->segment();
+      if (!seg)
+            return 0;
+
+      const int voice = chord->track() % VOICES;
+
+      Arpeggio* arp = chord->arpeggio();
+      Chord* owner = nullptr;
+      if (arp) {
+            // single staff arpeggios are handled by renderArpeggio()
+            if (!arp->playArpeggio() || arp->span() <= 1)
+                  return 0;
+            owner = chord;
+            }
+      else {
+            // the arpeggio may live on a higher staff and span onto this one
+            for (int s = 0; s < chord->staffIdx() && !owner; ++s) {
+                  Element* e = seg->element(s * VOICES + voice);
+                  if (!e || !e->isChord())
+                        continue;
+                  Arpeggio* a = toChord(e)->arpeggio();
+                  if (a && a->playArpeggio() && a->span() > 1 && s + a->span() > chord->staffIdx()) {
+                        arp = a;
+                        owner = toChord(e);
+                        }
+                  }
+            }
+      if (!owner)
+            return 0;
+
+      const bool up = arp->arpeggioType() != ArpeggioType::DOWN
+                   && arp->arpeggioType() != ArpeggioType::DOWN_STRAIGHT;
+
+      const int topStaff  = owner->staffIdx();
+      const int endStaff  = qMin(topStaff + arp->span(), note->score()->nstaves());
+      std::vector<const Note*> notes;
+      for (int s = topStaff; s < endStaff; ++s) {
+            Element* e = seg->element(s * VOICES + voice);
+            if (!e || !e->isChord())
+                  continue;
+            Chord* c = toChord(e);
+            // chords with an arpeggio of their own are rendered separately
+            if (c->tremolo() || (c != owner && c->arpeggio()))
+                  continue;
+            for (const Note* n : c->notes())
+                  if (!n->tieBack())
+                        notes.push_back(n);
+            }
+      if (notes.size() < 2)
+            return 0;
+
+      const Note* topNote = owner->notes().empty() ? chord->upNote() : owner->upNote();
+      if (!topNote)
+            return 0;
+      const int playTicks = topNote->playTicks();
+      if (playTicks <= 0)
+            return 0;
+      int l = 64;
+      while (l && (l * int(notes.size()) > playTicks))
+            l = 2 * l / 3;
+      if (!l)
+            return 0;
+
+      std::stable_sort(notes.begin(), notes.end(), [up](const Note* a, const Note* b) {
+            const int sa = a->chord()->staffIdx();
+            const int sb = b->chord()->staffIdx();
+            if (sa != sb)
+                  return up ? sa > sb : sa < sb;
+            return up ? a->pitch() < b->pitch() : a->pitch() > b->pitch();
+            });
+
+      int idx = -1;
+      for (size_t i = 0; i < notes.size(); ++i) {
+            if (notes[i] == note) {
+                  idx = int(i);
+                  break;
+                  }
+            }
+      if (idx <= 0)
+            return 0;
+
+      const qreal tempoRatio = note->score()->tempomap()->tempo(owner->tick().ticks()) / Score::defaultTempo();
+      return qRound(l * idx * tempoRatio * arp->Stretch());
+      }
+
+//---------------------------------------------------------
+//   renderCrossStaffArpeggio
+//    The offsets of a cross-staff arpeggio depend on the notes of
+//    all the spanned staves, so they are added in collectNote().
+//---------------------------------------------------------
+
+static void renderCrossStaffArpeggio(QList<NoteEventList>& ell)
+      {
+      for (NoteEventList& events : ell) {
+            events.clear();
+            events.append(NoteEvent(0, 0, 1000));
+            }
+      }
+
+//---------------------------------------------------------
 //   collectNote
 //---------------------------------------------------------
 
@@ -349,6 +465,9 @@ static void collectNote(EventMap* events, int channel, const Note* note, qreal v
       bool tieFor  = note->tieFor();
       bool tieBack = note->tieBack();
 
+      // computed once per note, the same offset applies to all its events
+      const int arpOffset = crossStaffArpeggioOffset(note);
+
       NoteEventList nel = note->playEvents();
       int nels = nel.size();
       for (int i = 0, pitch = note->ppitch(); i < nels; ++i) {
@@ -370,13 +489,17 @@ static void collectNote(EventMap* events, int channel, const Note* note, qreal v
             if (tieFor && i == nels - 1)
                   off += tieLen;
 
-            // A per-note playback delay moves the note-on only, the note still
-            // ends where it would without the delay. It is added on top of the
-            // offsets already carried by the note events (e.g. arpeggios).
+            // Extra offsets move the note-on only; the note still ends where it
+            // would without them. Both the cross-staff arpeggio and the per-note
+            // delay are added on top of the offsets already carried by the note
+            // events (e.g. single-staff arpeggios).
+            int extraTicks = arpOffset;
             const qreal delay = note->playDelay();
-            if (delay != 0.0) {
+            if (delay != 0.0)
+                  extraTicks += qRound(delay * chord->score()->tempomap()->tempo(on) * MScore::division / 1000.0);
+            if (extraTicks != 0) {
                   const int onTime = on;
-                  on += qRound(delay * chord->score()->tempomap()->tempo(on) * MScore::division / 1000.0);
+                  on += extraTicks;
                   // Grace notes legitimately live before their chord (negative
                   // ticks), so only pull notes back to the score start.
                   if (onTime >= 0 && on < 0)
@@ -2042,7 +2165,10 @@ static QList<NoteEventList> renderChord(Chord* chord, int gateTime, int ontime, 
             renderTremolo(chord, ell);
             }
       else if (chord->arpeggio() && chord->arpeggio()->playArpeggio()) {
-            renderArpeggio(chord, ell);
+            if (chord->arpeggio()->span() > 1)
+                  renderCrossStaffArpeggio(ell);
+            else
+                  renderArpeggio(chord, ell);
             arpeggio = true;
             }
       else
